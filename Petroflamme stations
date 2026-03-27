@@ -460,7 +460,7 @@ tbody tr.row-upd{animation:rowFlash 1.4s ease}
 (function(){
 'use strict';
 
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbxYv5qgvaXJh-aSPJvUp4CLjsyXwlJd5FxdO7YBsjorLQogQLGxkvYhmfNVuXClOkP_Qw/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbzv0T4IyAIV8rdGSmxVDHBhrapfOhcJr8Wz7B6yRBqtNgVjsixoG2VuPcbLU9aZNwfZ2Q/exec';
 var IS_GAS  = (typeof google !== 'undefined' && google.script && google.script.run);
 var CACHE_KEY = 'pf_dash_v2';
 
