@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,maximum-scale=1,user-scalable=no"/>
+<!-- ✅ NETLIFY: CSP meta autorisant JSONP vers script.google.com -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://script.google.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob:; connect-src 'self';"/>
 <title>Petroflamme</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -10,6 +12,8 @@
 <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
 <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
+<!-- ✅ NETLIFY: Chart.js chargé en statique avec defer (pas d'injection dynamique) -->
+<script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
 :root{
   --bg:#0a0f1a;--bg2:#0e1525;--card:#111b2e;--card2:#152238;--inp:#0b1222;
@@ -91,7 +95,6 @@ button{cursor:pointer;-webkit-appearance:none;appearance:none}
 .notif-item .ni-detail{font-size:11px;color:var(--t2);margin-top:2px}
 .notif-item .ni-time{font-size:10px;color:var(--t3);margin-top:4px}
 .notif-empty{text-align:center;padding:40px 20px;color:var(--t3);font-size:12px}
-/* TRIAL INDICATOR — compact floating icon */
 .trial-indicator{position:fixed;bottom:12px;left:12px;z-index:10000;display:none;align-items:center;gap:8px;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;transition:all .3s;max-width:calc(100vw - 24px);white-space:nowrap;overflow:hidden}
 .trial-indicator.ok{background:var(--okg);color:var(--ok);border:1px solid rgba(16,185,129,.25)}
 .trial-indicator.warn{background:rgba(255,107,53,.15);color:var(--acc2);border:1px solid rgba(255,107,53,.3)}
@@ -269,7 +272,6 @@ tbody tr.row-upd{animation:rowFlash 1.4s ease}
 <div id="lo"><div class="lo-logo">🔥 Petroflamme</div><div class="lo-spin"></div><div class="lo-txt">Chargement en cours…</div></div>
 <div id="tb"></div>
 
-<!-- COMPACT TRIAL INDICATOR (icon + short text, not blocking bottom) -->
 <div class="trial-indicator" id="trial-ind" onclick="onTrialClick()">
   <i class="fas fa-shield-alt"></i>
   <span class="trial-label" id="trial-label">—</span>
@@ -320,7 +322,6 @@ tbody tr.row-upd{animation:rowFlash 1.4s ease}
     <!-- SECURITY -->
     <div class="ps2" id="p-security"><div class="ph"><div class="pt"><i class="fas fa-shield-alt ta"></i> Sécurité</div></div>
       <div class="cd" style="max-width:420px"><h4 style="font-size:14px;font-weight:700;margin-bottom:4px">Mot de passe ventes</h4><p style="font-size:12px;color:var(--t3);margin-bottom:18px">Requis pour modifier/supprimer une vente (non-admin)</p><div class="fg"><label>Actuel</label><div style="display:flex;gap:8px"><input type="text" id="sec-cur" class="fp" readonly style="flex:1"/><button class="btn btn2" id="btn-show-pwd"><i class="fas fa-eye"></i></button></div></div><div class="fg"><label>Nouveau mot de passe</label><input type="text" id="sec-new" class="fp" placeholder="Min 3 caractères"/></div><button class="btn btn1" id="btn-save-sec" style="width:auto"><i class="fas fa-save"></i> Enregistrer</button></div>
-      <!-- Trial Extension Section (super_admin only) -->
       <div class="cd mt2" id="trial-admin-section" style="max-width:420px;display:none">
         <h4 style="font-size:14px;font-weight:700;margin-bottom:4px"><i class="fas fa-hourglass-half ta"></i> Gestion Licence</h4>
         <p style="font-size:12px;color:var(--t3);margin-bottom:18px">Gérer la durée de la période d'essai</p>
@@ -389,7 +390,7 @@ tbody tr.row-upd{animation:rowFlash 1.4s ease}
 (function(){
 'use strict';
 
-/* ===== NETLIFY-COMPATIBLE: Use JSONP for cross-origin GAS calls ===== */
+/* ===== NETLIFY: JSONP uniquement (IS_GAS=false hors contexte Google) ===== */
 var GAS_URL = 'https://script.google.com/macros/s/AKfycbzv0T4IyAIV8rdGSmxVDHBhrapfOhcJr8Wz7B6yRBqtNgVjsixoG2VuPcbLU9aZNwfZ2Q/exec';
 var IS_GAS  = (typeof google !== 'undefined' && google.script && google.script.run);
 var CACHE_KEY = 'pf_dash_v21';
@@ -445,16 +446,13 @@ window.markAllRead=markAllRead;
 
 function timeAgo(ts){if(!ts)return '';var d=new Date(ts),now=new Date(),diff=Math.floor((now-d)/1000);if(diff<60)return 'À l\'instant';if(diff<3600)return Math.floor(diff/60)+' min';if(diff<86400)return Math.floor(diff/3600)+' h';return Math.floor(diff/86400)+' j';}
 
-/* TRIAL INDICATOR — compact */
 function updateTrialUI(trial){
   if(!trial)return;
   S.trial=trial;
   var ind=$('trial-ind');
   var lbl=$('trial-label');
   var rem=trial.remaining_days;
-
   ind.style.display='flex';
-
   if(trial.expired){
     ind.className='trial-indicator expired';
     lbl.textContent='Licence expirée';
@@ -468,8 +466,6 @@ function updateTrialUI(trial){
     ind.className='trial-indicator ok';
     lbl.textContent='Licence '+rem+'j';
   }
-
-  /* Update admin panel if super_admin */
   if(ctr()){
     var sec=$('trial-admin-section');
     if(sec){
@@ -504,17 +500,63 @@ function reqPwd(type,data){var r=S.u?String(S.u.role||'').toLowerCase():'';if(r=
 function doPwdOk(){if(!_pa)return;var pw=$('pw-in').value;if(!pw){$('pw-err').style.display='block';return;}var t=_pa.t,d=_pa.d;_pa=null;clM('m-pwd');execPwd(t,d,pw);}
 function execPwd(t,d,pw){switch(t){case'edit':S._lsp=pw;openSaleM(d);break;case'del':doDelSale(d.id,pw);break;case'eliv':S._llp=pw;openLivM(d);break;case'dliv':doDelLiv(d.id,pw);break;}}
 
+/* =====================================================================
+   API — JSONP (compatible Netlify + tout hébergement statique)
+   Le GAS backend doit retourner : callbackName({"ok":true,...})
+   ===================================================================== */
 function api(action,params){
   var body=Object.assign({action:action},params||{});
-  if(IS_GAS){return new Promise(function(res,rej){var done=false;var _t=setTimeout(function(){if(!done){done=true;rej(new Error('Délai dépassé'));}},90000);google.script.run.withSuccessHandler(function(r){clearTimeout(_t);if(done)return;done=true;if(typeof r==='string'){try{r=JSON.parse(r);}catch(e){rej(new Error('Réponse invalide'));return;}}if(r&&r.ok===false&&r.message){rej(new Error(r.message));return;}res(r);}).withFailureHandler(function(e){clearTimeout(_t);if(!done){done=true;rej(new Error(e.message||String(e)));}}).apiFromClient(body);});}
+
+  /* Contexte Google Apps Script (web app déployée sur script.google.com) */
+  if(IS_GAS){
+    return new Promise(function(res,rej){
+      var done=false;
+      var _t=setTimeout(function(){if(!done){done=true;rej(new Error('Délai dépassé'));}},90000);
+      google.script.run
+        .withSuccessHandler(function(r){
+          clearTimeout(_t);if(done)return;done=true;
+          if(typeof r==='string'){try{r=JSON.parse(r);}catch(e){rej(new Error('Réponse invalide'));return;}}
+          if(r&&r.ok===false&&r.message){rej(new Error(r.message));return;}
+          res(r);
+        })
+        .withFailureHandler(function(e){
+          clearTimeout(_t);if(!done){done=true;rej(new Error(e.message||String(e)));}
+        })
+        .apiFromClient(body);
+    });
+  }
+
+  /* Contexte externe (Netlify, GitHub Pages, etc.) — JSONP */
   return new Promise(function(res,rej){
     var cb='_pf_'+(++_cbId)+'_'+Date.now(),done=false;
-    var tid=setTimeout(function(){if(done)return;done=true;cleanup();rej(new Error('Timeout'));},35000);
-    window[cb]=function(r){if(done)return;done=true;clearTimeout(tid);cleanup();if(typeof r==='string'){try{r=JSON.parse(r);}catch(e){rej(new Error('Réponse invalide'));return;}}if(r&&r.ok===false&&r.message){rej(new Error(r.message));return;}res(r);};
-    function cleanup(){try{delete window[cb];}catch(e){window[cb]=undefined;}var el=document.getElementById(cb);if(el&&el.parentNode)el.parentNode.removeChild(el);}
-    var sc=document.createElement('script');sc.id=cb;
-    sc.src=GAS_URL+'?data='+encodeURIComponent(JSON.stringify(body))+'&callback='+cb+'&_t='+Date.now();
-    sc.onerror=function(){if(done)return;done=true;clearTimeout(tid);cleanup();rej(new Error('Erreur réseau'));};
+    var tid=setTimeout(function(){
+      if(done)return;done=true;cleanup();
+      rej(new Error('Timeout — vérifiez que le serveur GAS est déployé en accès "Tout le monde"'));
+    },35000);
+
+    window[cb]=function(r){
+      if(done)return;done=true;clearTimeout(tid);cleanup();
+      if(typeof r==='string'){try{r=JSON.parse(r);}catch(e){rej(new Error('Réponse invalide'));return;}}
+      if(r&&r.ok===false&&r.message){rej(new Error(r.message));return;}
+      res(r);
+    };
+
+    function cleanup(){
+      try{delete window[cb];}catch(e){window[cb]=undefined;}
+      var el=document.getElementById(cb);
+      if(el&&el.parentNode)el.parentNode.removeChild(el);
+    }
+
+    var sc=document.createElement('script');
+    sc.id=cb;
+    sc.src=GAS_URL
+      +'?data='+encodeURIComponent(JSON.stringify(body))
+      +'&callback='+cb
+      +'&_t='+Date.now();
+    sc.onerror=function(){
+      if(done)return;done=true;clearTimeout(tid);cleanup();
+      rej(new Error('Erreur réseau — impossible de joindre le serveur GAS'));
+    };
     document.head.appendChild(sc);
   });
 }
@@ -584,7 +626,6 @@ function buildNav(){
       h+='<div class="ni" data-p="config-stations"><i class="fas fa-map-marker-alt"></i><span>Stations</span></div>';
       h+='<div class="ni" data-p="config-produits"><i class="fas fa-tags"></i><span>Produits & Prix</span></div>';
       h+='<div class="ni" data-p="config-categories"><i class="fas fa-folder-open"></i><span>Catégories</span></div>';
-      /* Show "Sécurité & Licence" for super_admin, just "Sécurité" for admin */
       var secLabel=ctr()?'Sécurité & Licence':'Sécurité';
       h+='<div class="ni" data-p="security"><i class="fas fa-shield-alt"></i><span>'+secLabel+'</span></div>';
       h+='<div class="ni" data-p="users"><i class="fas fa-users-cog"></i><span>Utilisateurs</span></div>';
@@ -623,7 +664,17 @@ function goStation(stName){S.cs=stName;_sfBusy=false;navTo('station');}
 window.goStation=goStation;
 
 function gCC(){var s=getComputedStyle(document.documentElement);return{g:s.getPropertyValue('--cg').trim(),t:s.getPropertyValue('--ct').trim(),l:s.getPropertyValue('--cl').trim()};}
-function rCharts(d){['s','p','l'].forEach(function(k){if(S.ch[k]){try{S.ch[k].destroy();}catch(e){}S.ch[k]=null;}});var c=gCC(),sts=d.stations||[],lb=[],mo=[],li=[];for(var i=0;i<sts.length;i++){lb.push(sts[i].station.replace(/Station Petroflamme /gi,'').replace(/Station /gi,''));mo.push(sts[i].montant);li.push(sts[i].litres);}var df={responsive:true,maintainAspectRatio:false,animation:{duration:250},plugins:{legend:{labels:{color:c.l,font:{family:"'Inter'",size:11}}}}};S.ch.s=new Chart($('ch-st'),{type:'bar',data:{labels:lb,datasets:[{label:'CA (FCFA)',data:mo,backgroundColor:PL.map(function(p){return p+'28';}),borderColor:PL,borderWidth:2,borderRadius:8}]},options:Object.assign({},df,{scales:{x:{ticks:{color:c.t,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.t,callback:function(v){return fm(v);}},grid:{color:c.g}}}})});var pl=[],pv=[];for(var j=0;j<(d.topProducts||[]).length;j++){pl.push(d.topProducts[j].produit);pv.push(d.topProducts[j].montant);}S.ch.p=new Chart($('ch-pr'),{type:'doughnut',data:{labels:pl,datasets:[{data:pv,backgroundColor:PL.slice(0,pl.length),borderWidth:0,spacing:3,borderRadius:6}]},options:Object.assign({},df,{cutout:'68%',plugins:{legend:{position:'bottom',labels:{color:c.l,padding:12,usePointStyle:true,font:{size:11}}}}})});S.ch.l=new Chart($('ch-vol'),{type:'bar',data:{labels:lb,datasets:[{label:'Litres',data:li,backgroundColor:'rgba(59,130,246,.2)',borderColor:'#3b82f6',borderWidth:2,borderRadius:8}]},options:Object.assign({},df,{indexAxis:'y',scales:{x:{ticks:{color:c.t,callback:function(v){return fm(v);}},grid:{color:c.g}},y:{ticks:{color:c.t,font:{size:10}},grid:{display:false}}}})});}
+function rCharts(d){
+  ['s','p','l'].forEach(function(k){if(S.ch[k]){try{S.ch[k].destroy();}catch(e){}S.ch[k]=null;}});
+  if(typeof Chart==='undefined')return; /* Chart.js pas encore chargé */
+  var c=gCC(),sts=d.stations||[],lb=[],mo=[],li=[];
+  for(var i=0;i<sts.length;i++){lb.push(sts[i].station.replace(/Station Petroflamme /gi,'').replace(/Station /gi,''));mo.push(sts[i].montant);li.push(sts[i].litres);}
+  var df={responsive:true,maintainAspectRatio:false,animation:{duration:250},plugins:{legend:{labels:{color:c.l,font:{family:"'Inter'",size:11}}}}};
+  S.ch.s=new Chart($('ch-st'),{type:'bar',data:{labels:lb,datasets:[{label:'CA (FCFA)',data:mo,backgroundColor:PL.map(function(p){return p+'28';}),borderColor:PL,borderWidth:2,borderRadius:8}]},options:Object.assign({},df,{scales:{x:{ticks:{color:c.t,font:{size:10}},grid:{display:false}},y:{ticks:{color:c.t,callback:function(v){return fm(v);}},grid:{color:c.g}}}})});
+  var pl=[],pv=[];for(var j=0;j<(d.topProducts||[]).length;j++){pl.push(d.topProducts[j].produit);pv.push(d.topProducts[j].montant);}
+  S.ch.p=new Chart($('ch-pr'),{type:'doughnut',data:{labels:pl,datasets:[{data:pv,backgroundColor:PL.slice(0,pl.length),borderWidth:0,spacing:3,borderRadius:6}]},options:Object.assign({},df,{cutout:'68%',plugins:{legend:{position:'bottom',labels:{color:c.l,padding:12,usePointStyle:true,font:{size:11}}}}})});
+  S.ch.l=new Chart($('ch-vol'),{type:'bar',data:{labels:lb,datasets:[{label:'Litres',data:li,backgroundColor:'rgba(59,130,246,.2)',borderColor:'#3b82f6',borderWidth:2,borderRadius:8}]},options:Object.assign({},df,{indexAxis:'y',scales:{x:{ticks:{color:c.t,callback:function(v){return fm(v);}},grid:{color:c.g}},y:{ticks:{color:c.t,font:{size:10}},grid:{display:false}}}})});
+}
 
 var _ts={};
 function sortTbl(tid,col){var k=tid+':'+col;_ts[k]=!_ts[k];var asc=_ts[k];var tbody=$(tid);if(!tbody)return;var allRows=Array.prototype.slice.call(tbody.rows);var rows=allRows.filter(function(r){return!r.style.fontWeight&&r.style.fontWeight!=='800';});var totRow=allRows.find(function(r){return r.style.fontWeight==='800'||(r.getAttribute('style')&&r.getAttribute('style').indexOf('font-weight')>-1);});rows.sort(function(a,b){var ac=(a.cells[col]||{}).textContent||'',bc=(b.cells[col]||{}).textContent||'';var an=parseFloat(ac.replace(/[^\d.,-]/g,'').replace(',','.').replace(/\s/g,'')),bn=parseFloat(bc.replace(/[^\d.,-]/g,'').replace(',','.').replace(/\s/g,''));if(!isNaN(an)&&!isNaN(bn))return asc?an-bn:bn-an;return asc?ac.localeCompare(bc,'fr'):bc.localeCompare(ac,'fr');});var ths=tbody.closest('table').querySelectorAll('thead th');ths.forEach(function(th,i){th.classList.remove('sort-asc','sort-desc');if(i===col)th.classList.add(asc?'sort-asc':'sort-desc');});var frag=document.createDocumentFragment();rows.forEach(function(r){frag.appendChild(r);});if(totRow)frag.appendChild(totRow);while(tbody.firstChild)tbody.removeChild(tbody.firstChild);tbody.appendChild(frag);}
@@ -656,7 +707,13 @@ function swSt(n){S.cs=n;_sfBusy=false;$('st-title').innerHTML='<i class="fas fa-
 
 function loadSF(){if(!S.cs||_sfBusy)return;_sfBusy=true;var spin='<tr><td colspan="20" style="text-align:center;padding:28px;color:var(--t3)"><i class="fas fa-circle-notch fa-spin"></i> Chargement…</td></tr>';['ven-tbl','liv-tbl','ver-tbl','dep-tbl','con-tbl','stk-tbl'].forEach(function(id){var el=$(id);if(el)el.innerHTML=spin;});$('st-res').innerHTML='';api('apiGetStationFull',{token:S.tk,stationName:S.cs,fromDate:$('sf-from').value||'',toDate:$('sf-to').value||''}).then(function(r){if(!r.ok){toast(r.message||'Erreur','error');return;}S.fd=r;S.sc=r.sales||[];S.lc=r.livraisons||[];S.vc=r.versements||[];S.dc=r.depenses||[];if(r.permissions)S.pm=r.permissions;if(r.stationPrix&&r.stationPrix.length){S.sp=r.stationPrix;rPS();}if(r.categories&&r.categories.length){S.cat=r.categories;popCatSel();}if(r.trial)updateTrialUI(r.trial);requestAnimationFrame(function(){rRes(r.resume);rStk(r.stock||[]);rVen(r.sales||[]);rLiv(r.livraisons||[]);rVer(r.versements||[]);rDep(r.depenses||[]);rCon(r.conso||[]);rResChart(r.resume||{});});}).catch(function(e){toast(e.message||'Erreur réseau','error');var err='<tr><td colspan="20" style="text-align:center;padding:28px;color:var(--err)"><i class="fas fa-exclamation-circle"></i> '+escH(e.message||'Erreur')+'</td></tr>';['ven-tbl','liv-tbl','ver-tbl','dep-tbl','con-tbl','stk-tbl'].forEach(function(id){var el=$(id);if(el)el.innerHTML=err;});}).finally(function(){_sfBusy=false;});}
 
-function rResChart(res){if(S.ch.res){try{S.ch.res.destroy();}catch(e){}S.ch.res=null;}var cv=$('ch-res');if(!cv)return;var c=gCC();var mr=res.montant_restant||0;S.ch.res=new Chart(cv,{type:'bar',data:{labels:['Livraisons','Versements','Dépenses','Restant dû'],datasets:[{data:[res.total_livraisons||0,res.total_versements||0,res.total_depenses||0,mr],backgroundColor:['rgba(59,130,246,.25)','rgba(16,185,129,.25)','rgba(239,68,68,.25)',mr>=0?'rgba(230,57,70,.25)':'rgba(239,68,68,.25)'],borderColor:['#3b82f6','#10b981','#ef4444',mr>=0?'#e63946':'#ef4444'],borderWidth:2,borderRadius:8}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:250},plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.t,font:{size:11}},grid:{display:false}},y:{ticks:{color:c.t,callback:function(v){return fm(v);}},grid:{color:c.g}}}}});}
+function rResChart(res){
+  if(S.ch.res){try{S.ch.res.destroy();}catch(e){}S.ch.res=null;}
+  var cv=$('ch-res');if(!cv)return;
+  if(typeof Chart==='undefined')return; /* Chart.js pas encore chargé */
+  var c=gCC();var mr=res.montant_restant||0;
+  S.ch.res=new Chart(cv,{type:'bar',data:{labels:['Livraisons','Versements','Dépenses','Restant dû'],datasets:[{data:[res.total_livraisons||0,res.total_versements||0,res.total_depenses||0,mr],backgroundColor:['rgba(59,130,246,.25)','rgba(16,185,129,.25)','rgba(239,68,68,.25)',mr>=0?'rgba(230,57,70,.25)':'rgba(239,68,68,.25)'],borderColor:['#3b82f6','#10b981','#ef4444',mr>=0?'#e63946':'#ef4444'],borderWidth:2,borderRadius:8}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:250},plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.t,font:{size:11}},grid:{display:false}},y:{ticks:{color:c.t,callback:function(v){return fm(v);}},grid:{color:c.g}}}}});
+}
 function rRes(res){if(!res)return;var mr=res.montant_restant||0;var rcClass=mr>0?'positive':mr===0?'zero':'';var mc=mr<0?'td':'ts';$('st-res').innerHTML='<div class="sc"><div class="si bl"><i class="fas fa-truck"></i></div><div class="sl">Livraisons</div><div class="sv">'+fmF(res.total_livraisons||0)+'</div></div><div class="sc"><div class="si gr"><i class="fas fa-hand-holding-usd"></i></div><div class="sl">Versements</div><div class="sv ts">'+fmF(res.total_versements||0)+'</div></div><div class="sc"><div class="si pu"><i class="fas fa-file-invoice-dollar"></i></div><div class="sl">Dépenses</div><div class="sv td">'+fmF(res.total_depenses||0)+'</div></div><div class="sc sc-restant '+rcClass+'"><div class="si re"><i class="fas fa-exclamation-triangle"></i></div><div class="sl" style="font-size:11px;font-weight:800;letter-spacing:.8px">RESTANT DÛ</div><div class="sv '+mc+'" style="font-size:24px">'+fmF(mr)+'</div><div style="font-size:9px;color:var(--t3);margin-top:4px">Versements + Dépenses - Livraisons</div></div><div class="sc"><div class="si am"><i class="fas fa-coins"></i></div><div class="sl">CA Ventes</div><div class="sv ta">'+fmF(res.total_ventes||0)+'</div></div>';}
 function rStk(stock){var rows=[],tL=0,tV=0,tS=0,tM=0,pxMap={};var px=(S.sp&&S.sp.length)?S.sp:S.pr;px.forEach(function(p){pxMap[p.produit]=p.prix_unitaire;});(stock||[]).forEach(function(p){var sl=p.stock_litres||0,pu=pxMap[p.produit]||0,ms=sl*pu;tL+=(p.livraisons_litres||0);tV+=(p.ventes_litres||0);tS+=sl;tM+=ms;rows.push('<tr><td class="fw6">'+escH(p.produit)+'</td><td class="tr">'+fm(p.livraisons_litres||0)+'</td><td class="tr">'+fm(p.ventes_litres||0)+'</td><td class="tr '+(sl>0?'ts':sl<0?'td':'')+'">'+fm(sl)+'</td><td class="tr fw7 ta">'+fmF(ms)+'</td></tr>');});if(rows.length)rows.push('<tr style="font-weight:800;background:var(--accg);border-top:2px solid var(--accb)"><td>TOTAL</td><td class="tr">'+fm(tL)+'</td><td class="tr">'+fm(tV)+'</td><td class="tr">'+fm(tS)+'</td><td class="tr ta">'+fmF(tM)+'</td></tr>');$('stk-tbl').innerHTML=rows.length?rows.join(''):'<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--t3)">Aucune donnée</td></tr>';}
 function rVen(items){var h=[],canE=ce(),canD=cd();if(!items||!items.length){$('ven-tbl').innerHTML='<tr><td colspan="8" style="text-align:center;padding:28px;color:var(--t3)"><i class="fas fa-receipt" style="font-size:24px;opacity:.3;display:block;margin-bottom:8px"></i>Aucune vente</td></tr>';return;}items.forEach(function(o){h.push('<tr><td class="fw7" style="color:var(--acc)">'+o.id+'</td><td>'+o.date+'</td><td class="fw6">'+escH(o.produit)+'</td><td class="tr">'+fm(o.prix_unitaire)+'</td><td class="tr">'+fm(o.quantite_litres)+'</td><td class="tr fw7 ta">'+fmF(o.montant_total)+'</td><td style="color:var(--t3);max-width:120px;overflow:hidden;text-overflow:ellipsis">'+(o.observations||'—')+'</td><td class="ac">'+(canE?'<button class="btni btn-edit-sale" data-id="'+o.id+'"><i class="fas fa-pen"></i></button>':'')+(canD?'<button class="btni btn-del-sale" data-id="'+o.id+'" style="color:var(--err)"><i class="fas fa-trash-alt"></i></button>':'')+'</td></tr>');});$('ven-tbl').innerHTML=h.join('');$('ven-tbl').querySelectorAll('.btn-edit-sale').forEach(function(b){b.addEventListener('click',function(){editSale(+b.dataset.id);});});$('ven-tbl').querySelectorAll('.btn-del-sale').forEach(function(b){b.addEventListener('click',function(){delSale(+b.dataset.id);});});}
@@ -687,9 +744,12 @@ function saveCon(){var prod=$('mc-pr').value;if(!prod)return toast('Produit requ
 
 window.togSide=togSide;
 
-document.addEventListener('DOMContentLoaded',function(){$('login-form').addEventListener('submit',function(e){e.preventDefault();doLogin(e);});checkSess();});
+document.addEventListener('DOMContentLoaded',function(){
+  $('login-form').addEventListener('submit',function(e){e.preventDefault();doLogin(e);});
+  checkSess();
+});
 
-(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';s.async=true;document.head.appendChild(s);})();
+/* ✅ Chart.js est chargé via <script defer> dans le <head> — pas d'injection dynamique */
 
 })();
 </script>
