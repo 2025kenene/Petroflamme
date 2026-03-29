@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,maximum-scale=1,user-scalable=no"/>
-<!-- ✅ NETLIFY: CSP meta autorisant JSONP vers script.google.com -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://script.google.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob:; connect-src 'self';"/>
+<!-- ✅ NETLIFY FIX: CSP autorisant script.google.com ET script.googleusercontent.com (redirection GAS) -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://script.google.com https://script.googleusercontent.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob:; connect-src 'self' https://script.google.com https://script.googleusercontent.com;"/>
 <title>Petroflamme</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -285,7 +285,7 @@ tbody tr.row-upd{animation:rowFlash 1.4s ease}
     <div class="fg"><label>Mot de passe</label><div class="iw"><i class="fas fa-lock"></i><input type="password" id="l-p" class="fc" placeholder="••••••••" required autocomplete="current-password"/></div></div>
     <button type="submit" class="btn btn1 btnw" id="l-btn"><i class="fas fa-sign-in-alt"></i> Se connecter</button>
   </form>
-  <div class="l-foot">© <b>JolofLab EPR</b> · v2.1.0 · <span id="ver-check" style="color:var(--t3)">…</span></div></div></div>
+  <div class="l-foot">© <b>JolofLab EPR</b> · v2.1.1 · <span id="ver-check" style="color:var(--t3)">…</span></div></div></div>
 </div>
 
 <!-- APP -->
@@ -390,7 +390,7 @@ tbody tr.row-upd{animation:rowFlash 1.4s ease}
 (function(){
 'use strict';
 
-/* ===== NETLIFY: JSONP uniquement (IS_GAS=false hors contexte Google) ===== */
+/* ===== NETLIFY FIX: JSONP + fetch fallback ===== */
 var GAS_URL = 'https://script.google.com/macros/s/AKfycbzv0T4IyAIV8rdGSmxVDHBhrapfOhcJr8Wz7B6yRBqtNgVjsixoG2VuPcbLU9aZNwfZ2Q/exec';
 var IS_GAS  = (typeof google !== 'undefined' && google.script && google.script.run);
 var CACHE_KEY = 'pf_dash_v21';
@@ -501,7 +501,7 @@ function doPwdOk(){if(!_pa)return;var pw=$('pw-in').value;if(!pw){$('pw-err').st
 function execPwd(t,d,pw){switch(t){case'edit':S._lsp=pw;openSaleM(d);break;case'del':doDelSale(d.id,pw);break;case'eliv':S._llp=pw;openLivM(d);break;case'dliv':doDelLiv(d.id,pw);break;}}
 
 /* =====================================================================
-   API — JSONP (compatible Netlify + tout hébergement statique)
+   API — JSONP principal + fetch fallback (compatible Netlify)
    Le GAS backend doit retourner : callbackName({"ok":true,...})
    ===================================================================== */
 function api(action,params){
@@ -526,7 +526,48 @@ function api(action,params){
     });
   }
 
-  /* Contexte externe (Netlify, GitHub Pages, etc.) — JSONP */
+  /* ✅ NETLIFY FIX: Essayer fetch d'abord, fallback JSONP si bloqué */
+  return apiFetch(body).catch(function(fetchErr){
+    console.warn('[Petroflamme] fetch échoué, fallback JSONP:', fetchErr.message);
+    return apiJSONP(body);
+  });
+}
+
+/* ✅ Méthode 1: fetch (plus fiable, pas de problème CSP) */
+function apiFetch(body){
+  return new Promise(function(res,rej){
+    var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var tid = setTimeout(function(){
+      if(ctrl) ctrl.abort();
+      rej(new Error('Timeout fetch'));
+    }, 35000);
+
+    fetch(GAS_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(body),
+      redirect: 'follow',
+      signal: ctrl ? ctrl.signal : undefined
+    })
+    .then(function(resp){
+      clearTimeout(tid);
+      if(!resp.ok) throw new Error('HTTP ' + resp.status);
+      return resp.json();
+    })
+    .then(function(r){
+      if(typeof r==='string'){try{r=JSON.parse(r);}catch(e){rej(new Error('Réponse invalide'));return;}}
+      if(r&&r.ok===false&&r.message){rej(new Error(r.message));return;}
+      res(r);
+    })
+    .catch(function(e){
+      clearTimeout(tid);
+      rej(e);
+    });
+  });
+}
+
+/* ✅ Méthode 2: JSONP fallback */
+function apiJSONP(body){
   return new Promise(function(res,rej){
     var cb='_pf_'+(++_cbId)+'_'+Date.now(),done=false;
     var tid=setTimeout(function(){
@@ -555,7 +596,7 @@ function api(action,params){
       +'&_t='+Date.now();
     sc.onerror=function(){
       if(done)return;done=true;clearTimeout(tid);cleanup();
-      rej(new Error('Erreur réseau — impossible de joindre le serveur GAS'));
+      rej(new Error('Erreur réseau JSONP — impossible de joindre le serveur GAS'));
     };
     document.head.appendChild(sc);
   });
@@ -666,7 +707,7 @@ window.goStation=goStation;
 function gCC(){var s=getComputedStyle(document.documentElement);return{g:s.getPropertyValue('--cg').trim(),t:s.getPropertyValue('--ct').trim(),l:s.getPropertyValue('--cl').trim()};}
 function rCharts(d){
   ['s','p','l'].forEach(function(k){if(S.ch[k]){try{S.ch[k].destroy();}catch(e){}S.ch[k]=null;}});
-  if(typeof Chart==='undefined')return; /* Chart.js pas encore chargé */
+  if(typeof Chart==='undefined')return;
   var c=gCC(),sts=d.stations||[],lb=[],mo=[],li=[];
   for(var i=0;i<sts.length;i++){lb.push(sts[i].station.replace(/Station Petroflamme /gi,'').replace(/Station /gi,''));mo.push(sts[i].montant);li.push(sts[i].litres);}
   var df={responsive:true,maintainAspectRatio:false,animation:{duration:250},plugins:{legend:{labels:{color:c.l,font:{family:"'Inter'",size:11}}}}};
@@ -710,7 +751,7 @@ function loadSF(){if(!S.cs||_sfBusy)return;_sfBusy=true;var spin='<tr><td colspa
 function rResChart(res){
   if(S.ch.res){try{S.ch.res.destroy();}catch(e){}S.ch.res=null;}
   var cv=$('ch-res');if(!cv)return;
-  if(typeof Chart==='undefined')return; /* Chart.js pas encore chargé */
+  if(typeof Chart==='undefined')return;
   var c=gCC();var mr=res.montant_restant||0;
   S.ch.res=new Chart(cv,{type:'bar',data:{labels:['Livraisons','Versements','Dépenses','Restant dû'],datasets:[{data:[res.total_livraisons||0,res.total_versements||0,res.total_depenses||0,mr],backgroundColor:['rgba(59,130,246,.25)','rgba(16,185,129,.25)','rgba(239,68,68,.25)',mr>=0?'rgba(230,57,70,.25)':'rgba(239,68,68,.25)'],borderColor:['#3b82f6','#10b981','#ef4444',mr>=0?'#e63946':'#ef4444'],borderWidth:2,borderRadius:8}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:250},plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.t,font:{size:11}},grid:{display:false}},y:{ticks:{color:c.t,callback:function(v){return fm(v);}},grid:{color:c.g}}}}});
 }
@@ -749,9 +790,7 @@ document.addEventListener('DOMContentLoaded',function(){
   checkSess();
 });
 
-/* ✅ Chart.js est chargé via <script defer> dans le <head> — pas d'injection dynamique */
-
 })();
 </script>
 </body>
-</html>
+</html>ee
